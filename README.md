@@ -239,9 +239,9 @@ PRs são bem-vindas. Para mudanças grandes, abra uma issue antes para discutirm
 Este projeto nasceu de uma conversa no grupo **Whats Programação IA**, onde a galera compartilha aprendizados sobre desenvolvimento com assistência de IA.
 
 - **🎩 Cleiton** — Administrador do grupo Whats Programação IA. Mantém a comunidade vibrante e organizada.
-- **🎬 Amarildo "Showman" Carvalho** — Mestre em Windev/WLanguage, referência técnica que abriu os olhos para o problema do CIOT/PEF e a urgência do prazo de 24/05/2026.
+- **🎬 Amarildo "Showman" Matos** — Mestre em Windev/WLanguage, referência técnica que abriu os olhos para o problema do CIOT/PEF e a urgência do prazo de 24/05/2026.
 - **🤖 Claude (Anthropic)** — Co-autor coadjuvante. Desenhou a arquitetura do SDK, implementou os 8 endpoints, depurou o `NullReferenceException` do servidor ANTT direto no DCS oficial v1.1, criou o tester Tkinter, e escreveu este README.
-- **🧑‍💻 Cassiano** ([Calunaty](https://calunaty.com.br)) — "Mero curioso" 😄 que provocou o desafio, testou contra o servidor real de homologação, e bateu o pé até resolver os erros que pareciam impossíveis. Calunaty está auxiliando no projeto e disponibilizando infra/certificado para os testes de integração.
+- **🧑‍💻 Cassiano** ([Calunaty](https://calunaty.com.br)) — mero curioso 😄, provocou o desafio e testou contra o servidor real.
 
 **Grupo Whats Programação IA** → entre na conversa: _\[adicione aqui o link de convite do grupo\]_
 
