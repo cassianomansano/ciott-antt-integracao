@@ -6,6 +6,26 @@ SDK Python para integração com a **API REST do Pagamento Eletrônico de Frete 
 
 ---
 
+## ⚠️ Status do endpoint 03 (DeclaracaoOperacaoTransporte) — precisa ajuda da comunidade
+
+O endpoint **03 (declarar operação / gerar CIOT)** ainda **não foi validado end-to-end** com sucesso real. Todos os erros estruturais foram resolvidos (payload alinhado ao DCS v1.1, `DistanciaPercorrida` como int, `DataDeclaracao` em BRT com offset `-03:00`, `IdOperacaoTransporte` gerado pela DLL ANTT), mas em **homologação** a última barreira é dado real:
+
+```
+"Rejeição: O veículo do tipo automotor informado não possui vínculo com o transportador contratado."
+```
+
+Em homologação as placas reais do CNPJ **não estão vinculadas** ao RNTRC — o ambiente é alimentado separadamente pela ANTT, não tem portal self-service.
+
+**Se você tem um CNPJ com placas cadastradas em homologação ou conseguir testar em produção (com cuidado, declarando + cancelando em <24h):**
+
+- Abra uma **issue** ou **PR** confirmando o sucesso da declaração end-to-end
+- Compartilhe a resposta do servidor (sem CNPJ/placas sensíveis, claro)
+- Se a única forma for solicitando cadastro à ANTT (`pef@antt.gov.br` / `jose-aa.filho@antt.gov.br` · (61) 3410-1561), documente o procedimento na issue
+
+Os outros **7 endpoints** (01, 02, 04, 05, 06, 07, 08) estão testados e funcionais.
+
+---
+
 ## ✨ Features
 
 - ✅ Todos os **8 endpoints** do DCS PEF v1.1 (SUTEC/ANTT)
@@ -241,7 +261,7 @@ Este projeto nasceu de uma conversa no grupo **Whats Programação IA**, onde a 
 - **🎩 Cleiton** — Administrador do grupo Whats Programação IA. Mantém a comunidade vibrante e organizada.
 - **🎬 Amarildo "Showman" Matos** — Mestre em Windev/WLanguage, referência técnica que abriu os olhos para o problema do CIOT/PEF e a urgência do prazo de 24/05/2026.
 - **🤖 Claude (Anthropic)** — Co-autor coadjuvante. Desenhou a arquitetura do SDK, implementou os 8 endpoints, depurou o `NullReferenceException` do servidor ANTT direto no DCS oficial v1.1, criou o tester Tkinter, e escreveu este README.
-- **🧑‍💻 Cassiano** ([Calunaty](https://calunaty.com.br)) — mero curioso 😄, provocou o desafio e testou contra o servidor real.
+- **🧑‍💻 Cassiano** ([Calunaty](https://calunaty.com.br)) — mero curioso 😄
 
 **Grupo Whats Programação IA** → entre na conversa: _\[adicione aqui o link de convite do grupo\]_
 
