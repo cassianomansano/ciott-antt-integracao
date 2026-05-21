@@ -41,3 +41,6 @@ Thumbs.db
 # .env real (.env.example pode commitar)
 .env
 
+
+# Projeto C# externo (referencia, nao redistribuir)
+.docs/projetoTesteCIOT.zip
