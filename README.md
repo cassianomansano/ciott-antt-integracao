@@ -267,6 +267,27 @@ Este projeto nasceu de uma conversa no grupo **Whats Programação IA**, onde a 
 
 ---
 
+## ☕ Me paga um café
+
+Se esse projeto te economizou tempo (ou multa de R$ 10.500), considera mandar um Pix livre 😄
+
+<img src=".docs/pix-qr.png" alt="QR Code Pix" width="220"/>
+
+**Pix Copia-e-Cola:**
+
+```
+00020126580014br.gov.bcb.pix0136545dc254-4842-4ad2-ade3-d85f21817ce35204000053039865802BR5908Cassiano6008DOURADOS62150511GitCiotANTT63041210
+```
+
+| Campo | Valor |
+|---|---|
+| Chave (aleatória) | `545dc254-4842-4ad2-ade3-d85f21817ce3` |
+| Favorecido | Cassiano · Dourados/MS |
+| Identificador | `GitCiotANTT` |
+| Valor | livre (você decide) |
+
+---
+
 ## 📜 Licença
 
 MIT — use, modifique, distribua. Atribuição apreciada mas não obrigatória.
