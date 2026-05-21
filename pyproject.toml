@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ciot-antt"
+version = "0.1.0"
+description = "SDK Python para integração com a API PEF/CIOT da ANTT"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.31",
+    "cryptography>=41",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7",
+    "pytest-mock>=3",
+]
+dll = [
+    # Para usar a DLL GeradorCIOTShared.dll da ANTT (gera IdOperacaoTransporte
+    # válido via API interna). Requer Windows + .NET runtime instalado.
+    "pythonnet>=3.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ciot_antt*"]

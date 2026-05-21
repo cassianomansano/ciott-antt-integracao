@@ -1,0 +1,43 @@
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Banco SQLite local (operacoes do cliente)
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs HTTP (contem payloads com dados do cliente)
+*.log
+
+# Config persistido (cert path, senha, CNPJ, RNTRC)
+.tester_config.json
+
+# Certificados — NUNCA commitar
+*.pfx
+*.p12
+*.pem
+*.key
+*.cer
+*.crt
+
+# Runtime config gerado dinamicamente pela pythonnet (criado em runtime)
+**/GeradorCIOTShared.runtimeconfig.json
+
+# IDE / OS / Agents
+.idea/
+.vscode/
+.claude/
+.cursor/
+*.swp
+.DS_Store
+Thumbs.db
+.pytest_cache/
+
+# .env real (.env.example pode commitar)
+.env
+

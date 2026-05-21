@@ -1,0 +1,28 @@
+{
+  "_README": "Copie este arquivo para .tester_config.json e preencha com SEUS dados. NUNCA commite .tester_config.json.",
+  "cert_pfx": "caminho/absoluto/para/seu_certificado.pfx",
+  "cert_password": "SENHA_DO_PFX",
+  "cnpj_interessado": "12.345.678/0001-90",
+  "env": "homologacao",
+  "saved_fields": {
+    "cpf_cnpj_transportador": "12345678000190",
+    "rntrc_transportador": "000123456",
+    "aux_dll_geradorciot_dir": "caminho/absoluto/para/.docs/geradorciotdll",
+    "aux_id_operacao_manual": "",
+    "aux_placa_reboque": "",
+    "aux_codigo_natureza_carga": "5705",
+    "aux_codigo_tipo_carga": "5",
+    "aux_peso_carga": "10000",
+    "aux_codigo_municipio_origem": "3550308",
+    "aux_codigo_municipio_destino": "3304557",
+    "aux_cep_origem": "01310100",
+    "aux_cep_destino": "20040020",
+    "aux_distancia_percorrida": "430",
+    "aux_placa_veiculo": "ABC1D23",
+    "aux_numero_eixos": "3",
+    "aux_valor_frete": "3500.00",
+    "aux_tipo_operacao": "1",
+    "aux_data_inicio_viagem": "2026-12-01",
+    "aux_data_fim_viagem": "2026-12-02"
+  }
+}
