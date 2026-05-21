@@ -267,9 +267,9 @@ Este projeto nasceu de uma conversa no grupo **Whats Programação IA**, onde a 
 
 ---
 
-## ☕ Me paga um café
+## ☕ Um cafézinho? 😊
 
-Se esse projeto te economizou tempo (ou multa de R$ 10.500), considera mandar um Pix livre 😄
+Se esse projeto te economizou tempo (ou multa de R$ 10.500), tem um Pix aí pra agradecer 🙏
 
 <img src=".docs/pix-qr.png" alt="QR Code Pix" width="220"/>
 
