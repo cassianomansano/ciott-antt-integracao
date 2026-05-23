@@ -44,3 +44,7 @@ Thumbs.db
 
 # Projeto C# externo (referencia, nao redistribuir)
 .docs/projetoTesteCIOT.zip
+
+# PDB debug symbols (gigantes, nao necessarios pra rodar)
+*.pdb
+!.docs/geradorCIOTDLL/GeradorCIOTShared.pdb
