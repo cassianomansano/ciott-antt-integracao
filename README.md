@@ -6,23 +6,31 @@ SDK Python para integração com a **API REST do Pagamento Eletrônico de Frete 
 
 ---
 
-## ⚠️ Status do endpoint 03 (DeclaracaoOperacaoTransporte) — precisa ajuda da comunidade
+## ⚠️ Status do endpoint 03 (DeclaracaoOperacaoTransporte)
 
-O endpoint **03 (declarar operação / gerar CIOT)** ainda **não foi validado end-to-end** com sucesso real. Todos os erros estruturais foram resolvidos (payload alinhado ao DCS v1.1, `DistanciaPercorrida` como int, `DataDeclaracao` em BRT com offset `-03:00`, `IdOperacaoTransporte` gerado pela DLL ANTT), mas em **homologação** a última barreira é dado real:
+Payload e fluxo **100% validados estruturalmente** contra o servidor de homologação. Todos os erros conhecidos foram resolvidos:
+
+- ✅ `DistanciaPercorrida` como int (float quebrava transformer .NET)
+- ✅ `DataDeclaracao` em BRT com offset `-03:00`
+- ✅ `IdOperacaoTransporte` gerado via API REST `/gerar` (sem precisar de DLL)
+- ✅ `NumeroEixos` int, `CodigoNaturezaCarga` int, `RNTRCVeiculo` (com sufixo), `IdentificadorPix` auto-gerado
+- ✅ `JustificativaContingencia: null`, `ContratantesCargFrac` (sem "a")
+
+**Última barreira em homologação** é dado real, não código:
 
 ```
 "Rejeição: O veículo do tipo automotor informado não possui vínculo com o transportador contratado."
+"Rejeição: O valor do frete informado é menor do que o valor mínimo de frete estabelecido."
 ```
 
-Em homologação as placas reais do CNPJ **não estão vinculadas** ao RNTRC — o ambiente é alimentado separadamente pela ANTT, não tem portal self-service.
+Em homologação as placas e o piso mínimo de frete são **independentes** da produção — o ambiente é alimentado separadamente pela ANTT, não tem portal self-service.
 
-**Se você tem um CNPJ com placas cadastradas em homologação ou conseguir testar em produção (com cuidado, declarando + cancelando em <24h):**
+**Para conseguir validar end-to-end:**
 
-- Abra uma **issue** ou **PR** confirmando o sucesso da declaração end-to-end
-- Compartilhe a resposta do servidor (sem CNPJ/placas sensíveis, claro)
-- Se a única forma for solicitando cadastro à ANTT (`pef@antt.gov.br` / `jose-aa.filho@antt.gov.br` · (61) 3410-1561), documente o procedimento na issue
+- Solicitar cadastro de placas em homologação ao contato técnico: `pef@antt.gov.br` ou `jose-aa.filho@antt.gov.br` · (61) 3410-1561
+- OU rodar em produção com cuidado (declarar + cancelar dentro de 24h)
 
-Os outros **7 endpoints** (01, 02, 04, 05, 06, 07, 08) estão testados e funcionais.
+Se você conseguir o sucesso end-to-end (CIOT completo `12+4 chars`), abre uma issue/PR documentando. Os outros **7 endpoints** (01, 02, 04, 05, 06, 07, 08) estão testados e funcionais.
 
 ---
 
@@ -30,11 +38,12 @@ Os outros **7 endpoints** (01, 02, 04, 05, 06, 07, 08) estão testados e funcion
 
 - ✅ Todos os **8 endpoints** do DCS PEF v1.1 (SUTEC/ANTT)
 - ✅ **mTLS** com certificado ICP-Brasil (`.pfx` / A1) — carregamento em memória
+- ✅ **Gerador de IdOperacaoTransporte** via API REST `/token` + `/gerar` (regra B16 — multiplataforma, sem dependência da DLL)
 - ✅ Modelos dataclass tipados com validação de **CPF/CNPJ** e **RNTRC**
 - ✅ **SQLite embutido** para persistência das operações + alerta de encerramento
 - ✅ Estrutura de payloads **alinhada com o DCS oficial v1.1** (após validação contra servidor de homologação)
 - ✅ **Tester visual (Tkinter)** com tema dark, persistência de config, máscara para dados sensíveis (gravar vídeo), e gerador de código de exemplo em 7 linguagens
-- ✅ Tudo em apenas **2 dependências externas** — `requests` + `cryptography`
+- ✅ Tudo em apenas **2 dependências externas** — `requests` + `cryptography` (DLL opcional via `pythonnet`)
 
 ---
 
@@ -163,27 +172,53 @@ Homologação aceita seu CNPJ + certificado real, **cadastrados previamente**. N
 ### 3. Estrutura DCS v1.1 tem armadilhas
 Pegadinhas que descobrimos batendo a cara no servidor de homologação até receber `HTTP 500 NullReferenceException`:
 
-| Campo | ❌ Errado | ✅ Correto (DCS v1.1) |
-|-------|----------|----------------------|
-| Veículo | `RNTRCVeiculo` | **`RNTRC`** |
+| Campo | ❌ Errado | ✅ Correto |
+|-------|----------|-----------|
+| Veículo | `RNTRC` curto | **`RNTRCVeiculo`** (com sufixo) |
 | Parcelas | array `Parcelas: [{...}]` | campos **flat** no `InfPagamento` |
 | Contratantes Carga Frac | `ContratantesCargaFrac` | **`ContratantesCargFrac`** (sem o "a" — typo do DCS oficial) |
 | CpfCnpjInteressado | enviado no body da declaração | **não existe** no body da declaração |
 | NCMCargaPrincipal | enviado | **não existe** no DCS v1.1 |
 | **DistanciaPercorrida** | `430.0` (float) → **HTTP 500 NPE** | **`430` (int)** — DCS tipo N (numérico inteiro) |
 | **DataDeclaracao** | UTC, hora local sem offset, ou `Z` → **Rejeição 269** | **BRT com offset `-03:00`** — ex: `"2026-05-21T15:44:37-03:00"` |
-| **IdOperacaoTransporte** | timestamp arbitrário | exige DLL **GeradorCIOTShared.dll** da ANTT — formato `ID administradora + DV` (regra B16). **Suportado via `pythonnet`** ⬇️ |
+| **NumeroEixos** | `"3"` string | **`3` int** |
+| **CodigoNaturezaCarga** | `"5705"` string | **`5705` int** |
+| **JustificativaContingencia** | `""` string vazia | **`null`** |
+| **IdentificadorPix** | omitido quando há ChavePix | **auto-gerado** (timestamp YYYYMMDDHHMMSS) |
+| **IdOperacaoTransporte** | timestamp arbitrário | gerado via **API REST `/gerar`** ou DLL — formato `ID administradora + DV` (regra B16) ⬇️ |
 
-### 🔌 Integração com a DLL ANTT (gera IdOperacaoTransporte válido)
+### 🔑 Gerador de IdOperacaoTransporte (`/token` + `/gerar`)
 
-A DLL `GeradorCIOTShared.dll` (netstandard 2.0) chama a API ANTT interna para gerar IDs válidos.
-Instale a dependência opcional `dll`:
+SDK chama os endpoints REST internos da ANTT automaticamente. **Não precisa da DLL** (funciona em Linux/Mac também).
+
+```
+POST {base}/token
+  headers: chave=<api-key-XOR-decoded>, Accept: application/json
+  body: "{}"
+  → {"token": "<JWT>"}
+
+POST {base}/gerar
+  headers: Authorization: Bearer <JWT>
+  body: {"cpfCnpj": "<CNPJ-CONTRATANTE>"}
+  → {"Sucesso": true, "Dados": {"CIOT": "<12 chars>"}}
+```
+
+Token JWT cacheado por 55min. Chamada feita automaticamente em `declarar_operacao()` quando `id_operacao` não é informado.
+
+**Pegadinhas críticas descobertas no código WLanguage funcional:**
+- A `chave` vai no **header HTTP**, não no body
+- Body do `/token` é literalmente `"{}"`
+- Field do `/gerar` é **`cpfCnpj`** (camelCase, não `cnpj`)
+- Response tem `Dados.CIOT` no **top-level**, não aninhado
+
+### 🔌 Alternativa: integração via DLL .NET (opcional)
+
+O SDK já gera IDs via REST puro (recomendado, multiplataforma). Mas se preferir
+chamar a DLL `GeradorCIOTShared.dll` da ANTT diretamente, instale o extra:
 
 ```bash
 pip install -e ".[dll]"
 ```
-
-Forneça o caminho da pasta da DLL ao criar o cliente:
 
 ```python
 client = CiotClient(
@@ -192,15 +227,10 @@ client = CiotClient(
     env="homologacao",
     dll_geradorciot_dir="caminho/para/pasta/com/GeradorCIOTShared.dll",
 )
-# Agora ao declarar sem id_operacao, SDK chama a DLL automaticamente
-resp = client.declarar_operacao(dados_sem_id_operacao)
-# resp.codigo_identificacao_operacao = "560000015446" (ou similar)
 ```
 
-Requisitos:
-- Windows + .NET Runtime 6.0/8.0/9.0 instalado
-- DLL fornecida pela ANTT ao requerer credenciamento — **não inclusa neste repositório**
-- Veja [.docs/COMO_OBTER_DLL.md](.docs/COMO_OBTER_DLL.md) para o procedimento de solicitação
+A DLL vira **fallback** — REST é tentado primeiro. Veja [.docs/COMO_OBTER_DLL.md](.docs/COMO_OBTER_DLL.md).
+Requisitos: Windows + .NET Runtime 6.0/8.0/9.0.
 
 ### 4. RNTRC sempre com 9 dígitos
 - 8 dígitos → preencher zero à esquerda (`"12345678"` → `"012345678"`)
