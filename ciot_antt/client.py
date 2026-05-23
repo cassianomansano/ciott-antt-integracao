@@ -100,43 +100,77 @@ class CiotClient:
 
     # ── Gerador de IdOperacaoTransporte (endpoint /gerar) ─────────────────────
 
-    def gerar_id_operacao_via_api(self, chave_api: str, cnpj: str) -> str:
-        """Obtém um IdOperacaoTransporte válido via API ANTT.
+    # Cache do token JWT (TTL 55min conforme implementação WLanguage de referência)
+    _token_cache: Optional[str] = None
+    _token_expiracao: Optional[datetime] = None
 
-        Descoberto na análise da DLL GeradorCIOTShared.dll v3.1:
-            1) POST {base}/token  body {"chave": "..."}  → response {"token": "..."}
-            2) POST {base}/gerar  Authorization: Bearer <token>  body {"cnpj": "..."}
-               → response (caminho aninhado dados.ciot.Dados.CIOT)
+    @staticmethod
+    def _decodificar_api_key() -> str:
+        """API key embutida na DLL ANTT, codificada via XOR (mask 42).
 
-        A "chave" é um identificador secreto distribuído pela ANTT às
-        AMPEFs/IPEFs credenciadas. Sem ela, /token responde 401 "Acesso Negado".
+        Descoberto via reverse engineering do código WLanguage funcional.
+        Resultado: 13 chars com símbolo no meio.
         """
-        # Base sem o /api final
+        b = [25, 127, 93, 120, 119, 105, 115, 126, 79, 107, 123, 120, 108]
+        return "".join(chr(x ^ 42) for x in b)
+
+    def gerar_id_operacao_via_rest(self, cnpj: Optional[str] = None) -> str:
+        """Gera IdOperacaoTransporte válido via API REST da ANTT.
+
+        NÃO precisa da DLL .NET — chama os endpoints /token e /gerar direto.
+
+        Fluxo (descoberto via código WLanguage funcional):
+            1) POST {base}/token
+               headers: chave=<api-key XOR-decoded>, Accept: application/json
+               body: "{}"
+               → {"token": "<JWT>"}
+            2) POST {base}/gerar
+               headers: Authorization: Bearer <JWT>
+               body: {"cpfCnpj": "<CNPJ>"}
+               → {"Sucesso": true, "Dados": {"CIOT": "<12 chars>"}}
+
+        Token cacheado por 55min.
+        """
+        cnpj_final = _validar_cpf_cnpj(cnpj or self.cnpj_interessado)
+        # Base sem /api (endpoints /token e /gerar ficam em /pefServices, não /pefServices/api)
         gen_base = self._base_url.rsplit("/api", 1)[0]
 
-        try:
-            r = self._session.post(
-                f"{gen_base}/token",
-                json={"chave": chave_api},
-                timeout=20,
-            )
-            r.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            raise CiotApiError(
-                codigo="TOKEN_ERROR",
-                mensagem=f"Falha em /token: {e}. Resposta: {r.text[:200]}",
-            ) from e
+        # ── 1. Token (com cache) ──
+        agora = datetime.now()
+        if not self._token_cache or not self._token_expiracao or agora >= self._token_expiracao:
+            try:
+                r = self._session.post(
+                    f"{gen_base}/token",
+                    headers={
+                        "chave": self._decodificar_api_key(),
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    data="{}",   # body literal "{}" — NÃO usa json= aqui
+                    timeout=20,
+                )
+                r.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                raise CiotApiError(
+                    codigo="TOKEN_ERROR",
+                    mensagem=f"Falha em /token: {e}. Resposta: {r.text[:200]}",
+                ) from e
 
-        token = r.json().get("token", "")
-        if not token:
-            raise CiotApiError(codigo="TOKEN_VAZIO",
-                               mensagem=f"Token vazio na resposta: {r.text[:200]}")
+            self._token_cache = r.json().get("token", "")
+            if not self._token_cache:
+                raise CiotApiError(codigo="TOKEN_VAZIO",
+                                   mensagem=f"Token vazio: {r.text[:200]}")
+            self._token_expiracao = agora + timedelta(minutes=55)
 
+        # ── 2. Gerar CIOT ──
         try:
             r = self._session.post(
                 f"{gen_base}/gerar",
-                json={"cnpj": _validar_cpf_cnpj(cnpj)},
-                headers={"Authorization": f"Bearer {token}"},
+                json={"cpfCnpj": cnpj_final},
+                headers={
+                    "Authorization": f"Bearer {self._token_cache}",
+                    "Accept": "application/json",
+                },
                 timeout=20,
             )
             r.raise_for_status()
@@ -147,19 +181,23 @@ class CiotClient:
             ) from e
 
         data = r.json()
-        # Procura path aninhado: dados.ciot.Dados.CIOT (descoberto no binário)
+        if not data.get("Sucesso", True):
+            raise CiotApiError(
+                codigo="GERAR_REJEITADO",
+                mensagem=str(data.get("Mensagem") or data.get("Erros") or data)[:300],
+            )
+
         ciot = (
-            data.get("dados", {}).get("ciot", {}).get("Dados", {}).get("CIOT")
-            or data.get("Dados", {}).get("CIOT")
+            data.get("Dados", {}).get("CIOT")
             or data.get("CIOT")
             or data.get("ciot")
         )
         if not ciot:
             raise CiotApiError(
                 codigo="CIOT_NAO_EXTRAIDO",
-                mensagem=f"Não foi possível extrair o CIOT da resposta: {r.text[:300]}",
+                mensagem=f"CIOT não extraído: {r.text[:300]}",
             )
-        return ciot
+        return str(ciot)
 
     # ── 1. ConsultarSituacaoTransportador ─────────────────────────────────────
 
@@ -223,18 +261,21 @@ class CiotClient:
 
     def declarar_operacao(self, dados: DeclaracaoInput) -> DeclaracaoResponse:
         if not dados.id_operacao:
-            # Tenta gerar via DLL (regra B16) se configurada, senão fallback timestamp
-            if self.dll_geradorciot_dir:
-                try:
-                    from ._dll_loader import gerar_id_via_dll
-                    dados.id_operacao = gerar_id_via_dll(
-                        dados.cpf_cnpj_contratante,
-                        self.dll_geradorciot_dir,
-                    )
-                except Exception:
+            # Ordem: 1) REST /gerar (sempre disponivel), 2) DLL (Windows+.NET), 3) timestamp
+            try:
+                dados.id_operacao = self.gerar_id_operacao_via_rest(dados.cpf_cnpj_contratante)
+            except Exception:
+                if self.dll_geradorciot_dir:
+                    try:
+                        from ._dll_loader import gerar_id_via_dll
+                        dados.id_operacao = gerar_id_via_dll(
+                            dados.cpf_cnpj_contratante,
+                            self.dll_geradorciot_dir,
+                        )
+                    except Exception:
+                        dados.id_operacao = _gerar_id_operacao()
+                else:
                     dados.id_operacao = _gerar_id_operacao()
-            else:
-                dados.id_operacao = _gerar_id_operacao()
         else:
             if len(dados.id_operacao) != 12:
                 raise CiotValidationError("id_operacao deve ter exatamente 12 caracteres")
@@ -457,20 +498,23 @@ def _od_to_dict(od) -> dict:
 def _carga_to_dict(carga) -> dict:
     d: dict = {}
     if carga.codigo_natureza_carga:
-        d["CodigoNaturezaCarga"] = carga.codigo_natureza_carga
+        # WLanguage de referência envia como INT (não string)
+        nat = carga.codigo_natureza_carga
+        try:
+            d["CodigoNaturezaCarga"] = int(nat)
+        except (ValueError, TypeError):
+            d["CodigoNaturezaCarga"] = nat
     if carga.peso_carga is not None:
         d["PesoCarga"] = float(carga.peso_carga)
     if carga.codigo_tipo_carga is not None:
         d["CodigoTipoCarga"] = int(carga.codigo_tipo_carga)
-    # ContratantesCargFrac (typo do DCS, sem "a") — só envia se houver
     if carga.contratantes_carga_frac:
         d["ContratantesCargFrac"] = carga.contratantes_carga_frac
     return d
 
 
 def _pagamento_to_dict(pag) -> dict:
-    # DCS v1.1: parcelas são campos FLAT no InfPagamento (NumeroParcela,
-    # DataVencimento, ValorParcela). NÃO existe array Parcelas[] aninhado.
+    # DCS v1.1: parcelas são campos FLAT no InfPagamento.
     d: dict = {
         "TipoPagamento": int(pag.tipo_pagamento),
         "CpfCnpjCreditado": pag.cpf_cnpj_creditado,
@@ -484,13 +528,13 @@ def _pagamento_to_dict(pag) -> dict:
         d["NumeroConta"] = pag.numero_conta
     if pag.chave_pix:
         d["ChavePix"] = pag.chave_pix
+        # IdentificadorPix auto-gerado quando há ChavePix (padrão WLanguage:
+        # timestamp YYYYMMDDHHMMSS sem hifens). Permite usuário sobrescrever.
+        d["IdentificadorPix"] = pag.identificador_pix or datetime.now().strftime("%Y%m%d%H%M%S")
     if pag.codigo_pagamento:
         d["CodigoPagamento"] = pag.codigo_pagamento
-    if pag.identificador_pix:
-        d["IdentificadorPix"] = pag.identificador_pix
-    # Parcelas flat — só quando ind_pagamento==1 (a prazo)
     if pag.parcelas:
-        p = pag.parcelas[0]  # DCS suporta uma parcela por estrutura flat
+        p = pag.parcelas[0]
         d["NumeroParcela"] = p.numero_parcela
         d["DataVencimento"] = p.data_vencimento
         d["ValorParcela"] = p.valor_parcela
@@ -517,13 +561,17 @@ def _declaracao_to_dict(dados: DeclaracaoInput, cnpj_interessado: str) -> dict:
         "InfPagamento": [_pagamento_to_dict(p) for p in dados.inf_pagamento],
     }
 
+    # JustificativaContingencia sempre presente (null se vazio) — padrão WLanguage
+    payload["JustificativaContingencia"] = (
+        dados.justificativa_contingencia if dados.ind_contingencia and dados.justificativa_contingencia
+        else None
+    )
+
     # Opcionais — só inclui se vier preenchido
     if dados.rntrc_contratante:
         payload["RNTRCContratante"] = _normalizar_rntrc(dados.rntrc_contratante)
     if dados.cpf_cnpj_destinatario:
         payload["CpfCnpjDestinatario"] = _validar_cpf_cnpj(dados.cpf_cnpj_destinatario)
-    if dados.ind_contingencia and dados.justificativa_contingencia:
-        payload["JustificativaContingencia"] = dados.justificativa_contingencia
     if dados.origem_destino:
         payload["OrigemDestino"] = [_od_to_dict(od) for od in dados.origem_destino]
     if dados.dados_carga:
@@ -539,8 +587,13 @@ def _declaracao_to_dict(dados: DeclaracaoInput, cnpj_interessado: str) -> dict:
 
 
 def _veiculo_to_dict(v) -> dict:
-    """Veiculo do payload — RNTRC opcional só vai se preenchido."""
-    d = {"Placa": v.placa, "NumeroEixos": str(v.numero_eixos)}
-    if v.rntrc_veiculo:
-        d["RNTRC"] = _normalizar_rntrc(v.rntrc_veiculo)
-    return d
+    """Veiculo do payload — segue implementação WLanguage de referência:
+    - NumeroEixos como int (não string)
+    - RNTRCVeiculo sempre presente (vazio quando não informado)
+    """
+    eixos = int(v.numero_eixos) if str(v.numero_eixos).isdigit() else v.numero_eixos
+    return {
+        "Placa": v.placa,
+        "RNTRCVeiculo": _normalizar_rntrc(v.rntrc_veiculo) if v.rntrc_veiculo else "",
+        "NumeroEixos": eixos,
+    }
