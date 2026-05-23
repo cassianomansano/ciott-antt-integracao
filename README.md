@@ -6,6 +6,23 @@ SDK Python para integração com a **API REST do Pagamento Eletrônico de Frete 
 
 ---
 
+## 🤔 Você é desenvolvedor ou usuário final?
+
+Esse projeto é um **SDK técnico**. Se você só precisa emitir CIOT esporadicamente sem programar, o caminho mais simples é o **canal gratuito de uma IPEF habilitada** (Target Bank, Roadcard, etc.) — não esse repositório.
+
+Decisão rápida:
+
+| Perfil | Caminho recomendado |
+|---|---|
+| 1 a 5 CIOTs/mês, sem TI | 👉 IPEF gratuita — veja [.docs/CIOT_VIA_IPEF.md](.docs/CIOT_VIA_IPEF.md) |
+| 5 a 30 CIOTs/mês | IPEF paga **ou** esse SDK se tiver dev |
+| 30+ CIOTs/mês ou ERP integrado | 👉 Esse SDK |
+| Já é IPEF ou tem cadastro técnico SUTEC | 👉 Esse SDK direto |
+
+Resumindo o caminho IPEF: é gratuito por lei (Resolução 5.862/2019), mas cadastro leva 3-15 dias e o vendedor empurra produto pago. Guia completo com ranking honesto, script anti-upsell e prazos reais em [.docs/CIOT_VIA_IPEF.md](.docs/CIOT_VIA_IPEF.md).
+
+---
+
 ## ⚠️ Status do endpoint 03 (DeclaracaoOperacaoTransporte)
 
 Payload e fluxo **100% validados estruturalmente** contra o servidor de homologação. Todos os erros conhecidos foram resolvidos:
