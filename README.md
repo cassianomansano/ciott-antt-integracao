@@ -19,7 +19,7 @@ Decisão rápida:
 | 30+ CIOTs/mês ou ERP integrado | 👉 Esse SDK |
 | Já é IPEF ou tem cadastro técnico SUTEC | 👉 Esse SDK direto |
 
-Resumindo o caminho IPEF: é gratuito por lei (Resolução 5.862/2019), mas cadastro leva 3-15 dias e o vendedor empurra produto pago. Guia completo com ranking honesto, script anti-upsell e prazos reais em [.docs/CIOT_VIA_IPEF.md](.docs/CIOT_VIA_IPEF.md).
+Resumindo o caminho IPEF: é gratuito por lei (Resolução 5.862/2019), mas cadastro leva 3-15 dias e o vendedor empurra produto pago. **Relatos da comunidade (2026-05) indicam que a eFrete tem sido uma das poucas com fluxo gratuito realmente operacional** — outras criam fricção. Guia completo com ranking, script anti-upsell, prazos reais e canais oficiais de reclamação em [.docs/CIOT_VIA_IPEF.md](.docs/CIOT_VIA_IPEF.md).
 
 ---
 

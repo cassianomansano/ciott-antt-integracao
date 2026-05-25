@@ -25,15 +25,34 @@ Se você aceita essas condições, dá pra emitir 100% sem custo.
 
 Lista oficial: [portal ANTT — instituições habilitadas](https://www.gov.br/antt/pt-br/assuntos/cargas/pagamento-eletronico-de-fretes-pef-ciot/instituicoes-de-pagamento-eletronico-de-frete).
 
+> 📣 **Aviso da comunidade (atualizado 2026-05-25):** relatos preliminares
+> de usuários indicam que, na prática, **algumas IPEFs criam fricção pesada**
+> no canal gratuito — cadastros que não saem, suporte que não responde,
+> redirecionamento insistente para plano pago. A **eFrete** tem sido citada
+> como uma das poucas com fluxo gratuito realmente operacional para usuário
+> esporádico.
+>
+> Este documento **não afirma conduta deliberada** de nenhuma instituição.
+> Resolução ANTT 5.862/2019 garante gratuidade; se você enfrentar dificuldade,
+> use os canais oficiais da §10.
+>
+> Sua experiência foi diferente do esperado? **Abra uma issue no repositório**
+> relatando IPEF, prazo de cadastro e se conseguiu emitir. Vamos manter este
+> guia vivo com dados reais da comunidade.
+
 Ranking por facilidade real do plano gratuito (não pela ordem da ANTT):
 
-| IPEF | Cadastro | Pressão pra plano pago | Recomendação |
-|---|---|---|---|
-| **Target Bank** | Simples, online | Baixa | ⭐ Comece por aqui |
-| **Roadcard "CIOT gratuito"** | Contrato adesão + documentos | Média | Boa alternativa |
-| **Repom** | Burocrático | Alta | Evitar p/ uso esporádico |
-| Sem Parar / NDD / Bradesco | Foco em cartão frete | Alta | Pular |
-| Fitbank / PagBem | Voltado B2B | Alta | Só se tiver volume |
+| IPEF | Cadastro | Pressão pra plano pago | Relato comunidade 2026-05 | Recomendação |
+|---|---|---|---|---|
+| **eFrete** | Simples | Baixa | ✅ Gratuito operacional | ⭐ Comece por aqui |
+| **Target Bank** | Simples, online | Baixa | ⚠️ Relatos mistos | Alternativa |
+| **Roadcard "CIOT gratuito"** | Contrato adesão + documentos | Média | ⚠️ Relatos mistos | Alternativa |
+| **Repom** | Burocrático | Alta | ❌ Relatos de fricção | Evitar p/ uso esporádico |
+| Sem Parar / NDD / Bradesco | Foco em cartão frete | Alta | ❌ Relatos de fricção | Pular |
+| Fitbank / PagBem | Voltado B2B | Alta | — sem relatos | Só se tiver volume |
+
+> Coluna "Relato comunidade" reflete depoimentos informais de usuários, não
+> teste sistemático. Atualizada conforme issues abertas. Discordância? Reporte.
 
 ---
 
@@ -141,7 +160,30 @@ Veja o [README principal](../README.md) pros detalhes técnicos.
 
 ---
 
-## 9. Links úteis
+## 9. Onde reclamar quando o gratuito não sai
+
+Resolução ANTT 5.862/2019 obriga IPEF habilitada a oferecer canal gratuito.
+Se o cadastro emperra, suporte some ou querem te empurrar plano pago como
+condição, **registre por escrito e use os canais oficiais**:
+
+| Canal | Para quê | Como |
+|---|---|---|
+| **Ouvidoria ANTT** | Descumprimento de norma por IPEF | https://ouvidoria.antt.gov.br |
+| **SUTEC/ANTT** | Questão técnica/regulatória do PEF | pef@antt.gov.br · (61) 3410-1561 |
+| **Procon estadual** | Cobrança indevida ou prática abusiva | site Procon do seu estado |
+| **Consumidor.gov.br** | Mediação direta com a IPEF | https://www.consumidor.gov.br |
+
+**Antes de reclamar:** tenha em mãos prints da tela, e-mails trocados e
+o pedido escrito de canal gratuito (texto da §3). Sem prova documental,
+reclamação não anda.
+
+**Contribua com o guia:** abra uma [issue no repositório](https://github.com/cassianomansano/ciott-antt-integracao/issues/new)
+com a tag `ipef-status` relatando sua experiência. Quanto mais relatos,
+mais útil o ranking da §2 fica pros próximos.
+
+---
+
+## 10. Links úteis
 
 | Recurso | Link |
 |---|---|
@@ -149,6 +191,7 @@ Veja o [README principal](../README.md) pros detalhes técnicos.
 | Lista oficial IPEFs | https://www.gov.br/antt/pt-br/assuntos/cargas/pagamento-eletronico-de-fretes-pef-ciot/instituicoes-de-pagamento-eletronico-de-frete |
 | Consulta pública CIOT | https://consultapublica.antt.gov.br/Site/ConsultaCIOT.aspx |
 | Resolução 5.862/2019 | https://www.gov.br/antt/pt-br/assuntos/cargas/pagamento-eletronico-de-fretes-pef-ciot |
+| eFrete — busque pelo portal oficial via Google | (não linkado para evitar URL errada — confirme na lista oficial ANTT acima) |
 | Target Bank — CIOT gratuito | https://www.transportesbra.com.br/vectiofretepublico/Default.aspx |
 | Roadcard — CIOT gratuito | https://roadcard.com.br/geracao-de-ciot-gratuito/ |
 
