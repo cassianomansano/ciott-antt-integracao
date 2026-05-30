@@ -49,6 +49,9 @@ Thumbs.db
 # util esta versionada em .docs/dcs_regras.md
 .docs/dcs_pef_v11.txt
 
+# Dump cru do Manual de Fiscalizacao TRC da ANTT (encoding quebrado, referencia local)
+_manual_full.txt
+
 # PDB debug symbols (gigantes, nao necessarios pra rodar)
 *.pdb
 !.docs/geradorCIOTDLL/GeradorCIOTShared.pdb
