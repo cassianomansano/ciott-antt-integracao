@@ -23,6 +23,24 @@ Resumindo o caminho IPEF: é gratuito por lei (Resolução 5.862/2019), mas cada
 
 ---
 
+## 🚦 Esse SDK serve pro seu caso? (Webservice direto × IPEF)
+
+> ⚠️ **Leia antes de tudo.** Esse SDK fala com o **Webservice ANTT direto**. Pela regra **B115 do DCS**, a emissão direta é sempre **"em nome próprio"**: **só funciona quando quem assina o certificado é o próprio transportador que executa o frete (o contratado)**. Operações **contratando TAC** só podem ser emitidas **via IPEF** — esse SDK **não** resolve esses casos.
+
+| Situação | Quem emite | Como emite |
+|---|---|---|
+| ETC com frota própria (sem TAC) | a própria ETC | **Webservice ANTT direto** ✅ (esse SDK) |
+| ETC subcontratada por outra ETC | a ETC que **executa** | **Webservice ANTT direto** ✅ (esse SDK) |
+| Qualquer um contratando TAC | quem contratou | **Somente via IPEF** ⚠️ |
+| Indústria/comércio contratando TAC | a indústria/comércio | **Somente via IPEF** ⚠️ |
+| ETC contratando TAC | a ETC contratante | **Somente via IPEF** ⚠️ |
+
+**Regra de ouro:** Webservice direto ⇔ **titular do certificado == `CpfCnpjContratado`**. Se forem diferentes, a ANTT rejeita com `"A empresa transportadora só pode emitir CIOT diretamente em nome próprio quando for o transportador contratado."` (rejeição 314).
+
+O SDK barra esse caso **antes** de chamar o servidor (`CiotValidationError`). Se o seu certificado for de uma **IPEF**, instancie com `emissor_e_ipef=True` para liberar a emissão por terceiros.
+
+---
+
 ## ⚠️ Status do endpoint 03 (DeclaracaoOperacaoTransporte)
 
 Payload e fluxo **100% validados estruturalmente** contra o servidor de homologação. Todos os erros conhecidos foram resolvidos:

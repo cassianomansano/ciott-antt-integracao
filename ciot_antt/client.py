@@ -42,12 +42,18 @@ class CiotClient:
         env: str = "homologacao",
         db_path: str = "ciot_operacoes.db",
         dll_geradorciot_dir: Optional[str] = None,
+        emissor_e_ipef: bool = False,
     ):
         if env not in _BASE_URLS:
             raise ValueError(f"env deve ser 'homologacao' ou 'producao', recebido: {env!r}")
         self._session = build_mtls_session(cert_pfx, cert_password)
         self._base_url = _BASE_URLS[env]
         self.cnpj_interessado = _validar_cpf_cnpj(cnpj_interessado)
+        # Webservice ANTT direto só emite CIOT "em nome próprio" (regra B115 do DCS):
+        # o contratado tem que ser o titular do certificado. Operações contratando
+        # TAC / subcontratando terceiros só podem ser emitidas via IPEF. Marque
+        # emissor_e_ipef=True apenas se o certificado for de uma Instituição de Pagamento.
+        self.emissor_e_ipef = emissor_e_ipef
         self.storage = CiotStorage(db_path)
         # Caminho opcional para a DLL GeradorCIOTShared.dll. Quando informado,
         # IdOperacaoTransporte é gerado via DLL (regra B16 da ANTT) em vez do
@@ -260,6 +266,26 @@ class CiotClient:
     # ── 3. DeclaracaoOperacaoTransporte ───────────────────────────────────────
 
     def declarar_operacao(self, dados: DeclaracaoInput) -> DeclaracaoResponse:
+        dados.cpf_cnpj_contratado = _validar_cpf_cnpj(dados.cpf_cnpj_contratado)
+        dados.cpf_cnpj_contratante = _validar_cpf_cnpj(dados.cpf_cnpj_contratante)
+
+        # Regra B115 do DCS: no Webservice ANTT direto a emissão é "em nome próprio",
+        # logo o contratado tem que ser o titular do certificado. Se o contratado for
+        # outro (ex.: ETC/indústria contratando um TAC), a ANTT rejeita com
+        # "A empresa transportadora só pode emitir CIOT diretamente em nome próprio
+        # quando for o transportador contratado." Esses casos só podem ser emitidos
+        # via IPEF — barramos aqui (antes de gerar ID/chamar servidor) para não gastar
+        # ida ao servidor nem consumir um IdOperacaoTransporte.
+        if not self.emissor_e_ipef and dados.cpf_cnpj_contratado != self.cnpj_interessado:
+            raise CiotValidationError(
+                "Webservice ANTT direto só emite CIOT em nome próprio (regra B115 do DCS): "
+                f"o contratado ({dados.cpf_cnpj_contratado}) deve ser o titular do "
+                f"certificado ({self.cnpj_interessado}). Operações contratando TAC ou "
+                "subcontratando terceiros só podem ser emitidas via IPEF. Se este "
+                "certificado for de uma Instituição de Pagamento (IPEF), instancie o "
+                "CiotClient com emissor_e_ipef=True."
+            )
+
         if not dados.id_operacao:
             # Ordem: 1) REST /gerar (sempre disponivel), 2) DLL (Windows+.NET), 3) timestamp
             try:
@@ -287,8 +313,6 @@ class CiotClient:
             dados.data_declaracao = dt.strftime("%Y-%m-%dT%H:%M:%S") + "-03:00"
 
         dados.rntrc_contratado = _normalizar_rntrc(dados.rntrc_contratado)
-        dados.cpf_cnpj_contratado = _validar_cpf_cnpj(dados.cpf_cnpj_contratado)
-        dados.cpf_cnpj_contratante = _validar_cpf_cnpj(dados.cpf_cnpj_contratante)
 
         payload = _declaracao_to_dict(dados, self.cnpj_interessado)
         d = self._post("DeclaracaoOperacaoTransporte", payload)

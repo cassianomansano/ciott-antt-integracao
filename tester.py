@@ -362,7 +362,12 @@ REJEIÇÕES CONHECIDAS (NÃO são bug do código — dados reais)
        A placa precisa estar na frota cadastrada do CNPJ contratado
        no RNTRC. Cadastrar antes via portal ANTT.
    • "CodigoNaturezaCarga é inválido":
-       Tabela própria ANTT (4 dígitos). Pedir lista à SUTEC.
+       É o NCM — use os 4 PRIMEIROS DÍGITOS do NCM do produto
+       principal da NF-e (ex: 1201, 2710). Regra B9 do DCS.
+   • "só pode emitir CIOT diretamente em nome próprio" (rej. 314):
+       Webservice direto = emissão em nome próprio. Titular do
+       certificado TEM que ser o CpfCnpjContratado (quem executa).
+       Contratou TAC? Só via IPEF — esse webservice não resolve.
 
 PRAZO ENCERRAMENTO (após DataFimViagem)
    • Lotação/Fracionada: 5 dias corridos → senão multa R$ 10.500
@@ -465,8 +470,10 @@ _HELP_AUX = """\
 ESSES CAMPOS são usados para MONTAR o JSON do endpoint 03 (Declaração).
 São salvos em `.tester_config.json` e ficam disponíveis em todas as sessões.
 
-   • Código natureza carga (4 dig) — tabela própria ANTT (NÃO é NCM!)
-     Pedir lista à SUTEC/ANTT. Exemplos: 0101, 0202...
+   • Código natureza carga (4 dig) = 4 PRIMEIROS DÍGITOS DO NCM
+     do produto principal (maior valor/qtd) da NF-e. Mande como int.
+     Ex: soja 1201.90.00 -> 1201, combustível 2710.19.21 -> 2710.
+     (Não é tabela separada — é o próprio NCM/SH, regra B9 do DCS.)
 
    • Código tipo carga (1-12) — fixo no DCS:
        1=Granel sólido        7=Perigosa granel sólido

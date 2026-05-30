@@ -45,6 +45,10 @@ Thumbs.db
 # Projeto C# externo (referencia, nao redistribuir)
 .docs/projetoTesteCIOT.zip
 
+# Dump cru do PDF DCS (extracao pdfminer, bagunçado). A versao curada e
+# util esta versionada em .docs/dcs_regras.md
+.docs/dcs_pef_v11.txt
+
 # PDB debug symbols (gigantes, nao necessarios pra rodar)
 *.pdb
 !.docs/geradorCIOTDLL/GeradorCIOTShared.pdb

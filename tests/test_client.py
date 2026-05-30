@@ -21,7 +21,10 @@ CPF_TRANSPORTADOR = "52998224725"
 RNTRC = "123456789"
 
 
-def _make_client(tmp_path) -> CiotClient:
+def _make_client(tmp_path, emissor_e_ipef: bool = True) -> CiotClient:
+    # emissor_e_ipef=True por padrão: as declarações de teste modelam o cenário
+    # "contratante contrata TAC" (contratado != interessado), que no Webservice
+    # direto bate na regra B115. Como IPEF, esse fluxo é válido.
     with patch("ciot_antt.client.build_mtls_session") as mock_build:
         mock_session = MagicMock()
         mock_build.return_value = mock_session
@@ -31,6 +34,7 @@ def _make_client(tmp_path) -> CiotClient:
             cnpj_interessado=CNPJ_INTERESSADO,
             env="homologacao",
             db_path=str(tmp_path / "test.db"),
+            emissor_e_ipef=emissor_e_ipef,
         )
         client._session = mock_session
         return client
@@ -125,6 +129,36 @@ def test_declarar_operacao_frete_rejeitado(tmp_path):
         client.declarar_operacao(dados)
     assert exc_info.value.codigo == "291"
     assert "mínimo" in exc_info.value.mensagem
+
+
+# ── Testes regra B115 (emissão em nome próprio) ───────────────────────────────
+
+def test_declarar_contratado_diferente_do_titular_raise(tmp_path):
+    # Webservice direto (não-IPEF): contratado (TAC) != titular do cert → B115.
+    client = _make_client(tmp_path, emissor_e_ipef=False)
+    dados = _make_declaracao_input()  # contratado = TAC != cnpj_interessado
+    with pytest.raises(CiotValidationError, match="nome próprio"):
+        client.declarar_operacao(dados)
+    # Não pode ter chamado o servidor
+    client._session.post.assert_not_called()
+
+
+def test_declarar_frota_propria_ok(tmp_path):
+    # Frota própria: contratado == titular do cert → passa a validação B115.
+    client = _make_client(tmp_path, emissor_e_ipef=False)
+    _mock_response(client, {
+        "CodigoIdentificacaoOperacao": "202605241002",
+        "CodigoVerificador": "4321",
+        "Protocolo": "PROT",
+        "Codigo": "000000",
+        "Mensagem": "OK",
+        "AvisoTransportador": "",
+    })
+    dados = _make_declaracao_input()
+    dados.cpf_cnpj_contratado = CNPJ_INTERESSADO  # ETC emite em nome próprio
+    dados.id_operacao = "202605241002"
+    resp = client.declarar_operacao(dados)
+    assert resp.codigo_identificacao_operacao == "202605241002"
 
 
 # ── Testes RNTRC ──────────────────────────────────────────────────────────────

@@ -50,7 +50,7 @@ Grid das declarações já feitas (banco SQLite local `ciot_operacoes.db`). Most
 | **Pasta DLL GeradorCIOT**          | `d:/projetos/GitHub/ciot-antt/.docs/geradorciotdll` |
 | Placa veículo (cavalo)             | Placa REAL do seu CNPJ — tipo automotor |
 | Placa reboque (implemento)         | Placa REAL do seu CNPJ — tipo implemento |
-| **Código natureza carga**          | `5705` ou `1001` ✅ (testados válidos) |
+| **Código natureza carga**          | 4 primeiros díg do NCM (ex: `1201`). `5705`/`1001` ✅ testados |
 | Código tipo carga (1-12)           | `5` (Carga Geral) |
 | Peso carga (kg)                    | `10000` |
 | Cód. município origem IBGE 7d      | `3550308` (São Paulo) |
@@ -119,8 +119,8 @@ Grid das declarações já feitas (banco SQLite local `ciot_operacoes.db`). Most
 | `É obrigatório informar ao menos um implemento quando o veículo automotor for do tipo cavalo-trator` | Adicionar placa de reboque na aba Auxiliares |
 | `Somente um veículo deve ser do tipo automotor` | Você passou 2 cavalos. Apenas 1 cavalo + 1+ implementos |
 | `É necessário informar ao menos um veículo do tipo automotor` | Só passou implemento. Precisa de pelo menos 1 cavalo |
-| `O código da natureza da carga informado não existe` | Use `5705` ou `1001`. Outros podem rejeitar — peça lista oficial à SUTEC |
-| `A empresa transportadora só pode emitir CIOT diretamente em nome próprio quando for o transportador contratado` | Certificado é transportador, não embarcador. Use `CpfCnpjContratado = CpfCnpjContratante = seu CNPJ` |
+| `O código da natureza da carga informado não existe` | É o **NCM**: use os **4 primeiros dígitos do NCM** do produto principal da NF-e (ex: `1201` soja, `2710` combustível). Regra B9 do DCS. `5705`/`1001` funcionam por serem headings NCM válidos |
+| `A empresa transportadora só pode emitir CIOT diretamente em nome próprio quando for o transportador contratado` (rej. 314) | Webservice direto = emissão **em nome próprio** (regra B115). Titular do certificado TEM que ser o `CpfCnpjContratado`. **Contratou TAC → só via IPEF**, esse webservice não resolve. Veja tabela "QUEM EMITE e COMO" no README |
 | `Acesso Negado` (401) em `/token` | Endpoint interno da DLL — chave embutida pode estar rotacionada |
 
 ---
@@ -211,7 +211,6 @@ sqlite3 ciot_operacoes.db "SELECT id_operacao, status, ciot_codigo, mensagem FRO
 | Cadastrar certificado/CNPJ na ANTT         | `pef@antt.gov.br` ou `jose-aa.filho@antt.gov.br` |
 | Pedir DLL `GeradorCIOTShared.dll`          | Idem |
 | Pedir massa de teste em homologação        | Idem |
-| Pedir tabela de `CodigoNaturezaCarga`      | Idem |
 | Dúvidas técnicas                           | (61) 3410-1561 (SUTEC/ANTT) |
 
 ---
